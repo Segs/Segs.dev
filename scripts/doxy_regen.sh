@@ -70,10 +70,12 @@ if [ -d "${REPO_DIR}" ]; then
     # Inject version into Doxyfile prior to generation
     sed -i "s/\(^PROJECT_NUMBER\)\(.*\)/\1 = \"${FULL_VERSION}\"/" "${DOXY_FILE}"
 
-    # Copy logo into place if it exists
+    # Copy images into place so they are available prior to generation
     if [ -f ../"${LOGO_FILE}" ]; then
       cp ../"${LOGO_FILE}" .
     fi
+    mkdir images
+    cp ../images/segs*dbschema.png images
 
     # Generate documentation
     doxygen

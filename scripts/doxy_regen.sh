@@ -83,9 +83,10 @@ if [ -d "${REPO_DIR}" ]; then
       rm -rf "${DOXY_DEST}".old
     fi
     mv "${DOXY_DEST}" "${DOXY_DEST}".old
-    mkdir -p "${DOXY_DEST}"/images
+    mkdir -p "${DOXY_DEST}"/images/dbschema
     if [ -d "${DOXY_DEST}" ]; then
       cp -Rp doxygen/html/* "${DOXY_DEST}"
+      cp ../images/segs*dbschema.png "${DOXY_DEST}"/images/dbschema
     else
       echo "Unable to create ${DOXY_DEST} directory!"
       exit 1

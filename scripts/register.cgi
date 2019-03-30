@@ -60,6 +60,9 @@ except ImportError:
 #######################
 ### <CONFIGURABLES> ###
 #######################
+# Title of the page
+page_title = "SEGS Community Server - Account Registration"
+
 # Enable debugging to display debug messages to web client
 debug_mode = False
 
@@ -165,12 +168,12 @@ def display_page(info_msg = "", msg_color = "red"):
   print("Content-Type: text/html\r\n\r\n")
   print("<html>")
   print("<head>")
-  print("<title>SEGS Community Server - Account Registration</title>")
+  print("<title>" + page_title + "</title>")
   print("</head>")
   print("<body>")
   print("<center>")
   print("<img src=\"segs_logo.jpg\">")
-  print("<h2>SEGS Community Server - Account Registration</h2>")
+  print("<h2>" + page_title + "</h2>")
   if info_msg != "":
     if msg_color == "green":
       print("<p style=\"color:green\">" + info_msg + "</p>")

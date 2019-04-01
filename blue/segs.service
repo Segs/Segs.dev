@@ -1,0 +1,14 @@
+[Unit]
+Description=SEGS community test server
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=segs
+ExecStart=/opt/segs/segs_server.sh
+
+[Install]
+WantedBy=multi-user.target

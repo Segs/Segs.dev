@@ -38,9 +38,10 @@
 # Imports
 import cgi, cgitb           # for CGI stuff
 import hashlib              # for generating dbtool hash
+import os                   # for running system commands (use subprocess instead!) and path separator
+import platform             # for OS check
 import re                   # for regex pattern matching
 import subprocess           # for running system commands
-#import os                  # for running system commands (use subprocess instead!)
 import sys                  # for I/O streams and Python version
 if sys.version_info[0] < 3:
   from pipes import quote   # for defending against arbitrary user input in Python 2.x
@@ -66,7 +67,10 @@ page_title = "SEGS Community Server - Account Registration"
 # Enable debugging to display debug messages to web client
 debug_mode = False
 
-# Directory where dbtool resides
+# Directory where dbtool resides (uncomment one depending on your OS!)
+# Prepend string with 'r' on Windows to handle paths properly.
+#dbtool_path = r"C:\SEGS\bin"
+# On Linux/Unix, forward slashes in paths are fine without specifying a raw string.
 dbtool_path = "/apps/segs/bin"
 
 # SHA256 hash of dbtool (ensures the executable has not been tampered with)
@@ -96,6 +100,13 @@ try:
 except ValueError:
   access_level = "1"
 
+# Set dbtool file name and path
+if platform.system() == "Windows":
+  dbtool_name = r"\dbtool.exe"
+else:
+  dbtool_name = "/dbtool"
+os.environ["PATH"] += os.pathsep + dbtool_path
+
 # Handle form data
 form = cgi.FieldStorage()
 username = form.getvalue('username', "")
@@ -110,7 +121,7 @@ password_pattern = re.compile("^[A-Za-z0-9]{6,12}$")
 # Get current dbtool hash from filesystem and compare it to ours
 def check_hash():
   try:
-    with open(dbtool_path + "/dbtool", "rb") as dbtool_file:
+    with open(dbtool_path + dbtool_name, "rb") as dbtool_file:
       dbtool_binary = dbtool_file.read()
       dbtool_hash2 = hashlib.sha256(dbtool_binary).hexdigest()
       if dbtool_hash == dbtool_hash2:
@@ -123,8 +134,8 @@ def check_hash():
 def create_account(requested_username, requested_password, access_level):
   try:
     # If user wanted to use MySQL, but the connector was not found, they lied to us. Reset it. :)
+    global use_mysql
     if use_mysql and not mysql_found:
-      global use_mysql
       use_mysql = False
 
     if use_mysql:
@@ -139,7 +150,7 @@ def create_account(requested_username, requested_password, access_level):
       # This requires read and execute permissions outside of the webroot directory. As a result, use pipes.quote()
       # (Python 2.x) or shlex.quote() (Python 3.x) on user input to thwart injection. The username and password
       # passed to create_account() should already be clean from a previous regex check, but make sure anyway...
-      dbtool_command = "./dbtool adduser -a {} -l {} -p {}".format(quote(access_level), quote(requested_username), quote(requested_password))
+      dbtool_command = dbtool_path + dbtool_name + " adduser -a {} -l {} -p {}".format(quote(access_level), quote(requested_username), quote(requested_password))
 
       # Check dbtool hash
       if not check_hash():
@@ -150,7 +161,7 @@ def create_account(requested_username, requested_password, access_level):
       #os.system(dbtool_command)
 
       # Run dbtool, wait for result, and return exit code
-      dbtool_proc = subprocess.Popen(dbtool_command, cwd = dbtool_path, shell = True, stderr = subprocess.PIPE, stdout = subprocess.PIPE)
+      dbtool_proc = subprocess.Popen(dbtool_command, cwd = dbtool_path, shell = True, stderr = subprocess.PIPE, stdin = subprocess.PIPE, stdout = subprocess.PIPE)
       (dbtool_proc_output, dbtool_proc_err) = dbtool_proc.communicate()
       dbtool_proc_status = dbtool_proc.wait()
       if debug_mode:

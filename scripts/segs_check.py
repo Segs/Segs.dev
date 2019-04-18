@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
-# Restart SEGS if auth and/or RPC port becomes unresponsive. -ldilley
-# ToDo: Port to Windows and run via Task Scheduler.
+# Restart SEGS via cron or Task Scheduler if auth and/or RPC port becomes unresponsive. -ldilley
 
 import os
+import platform
 import socket
+import time
 
+HOST_NAME = "blue"
 CONNECT_TIMEOUT = 3
+WIN_SLEEP_TIME = 3
 
 def check_connection(host, port, payload = None):
   try:
@@ -21,11 +24,16 @@ def check_connection(host, port, payload = None):
     data = None
   return data
 
-auth_data = check_connection("blue", 2106)
+auth_data = check_connection(HOST_NAME, 2106)
 rpc_query = '{"jsonrpc": "2.0", "method": "ping", "id": 1}'
-rpc_data = check_connection("blue", 6001, rpc_query)
+rpc_data = check_connection(HOST_NAME, 6001, rpc_query)
 if not auth_data or not rpc_data:
-  os.system("sudo systemctl restart segs")
+  if platform.system() == "Windows":
+    os.system("sc stop segs")
+    time.sleep(WIN_SLEEP_TIME)
+    os.system("sc start segs")
+  else:
+    os.system("sudo systemctl restart segs")
 #else:
 #  print("Auth response: " + repr(auth_data) + "\n")
 #  print("RPC response: \n" + str(rpc_data))
